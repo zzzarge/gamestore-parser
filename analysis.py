@@ -7,7 +7,7 @@ INPUT_FILE = 'data/products.csv'
 CHARTS_DIR = 'charts'
 CURRENT_YEAR = 2026
 
-# ВРЕМЕННО: пока cleaner.py не готов
+#--------Чуть очистка же есть-----------
 import pandas as pd
 def clean_price(text):
     if pd.isna(text):
