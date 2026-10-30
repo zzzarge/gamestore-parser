@@ -26,64 +26,66 @@ HEADERS = {
     ),
     "Accept-Language": "ru-RU,ru;q=0.9",
 }
+def run_scraper():
+    products = []
 
-products = []
+    for category, base_url in categories.items():
+        print("=== Категория:", category)
 
-for category, base_url in categories.items():
-    print("=== Категория:", category)
-
-    for page in range(1, 100):
-        if page == 1:
-            url = base_url
-        else:
-            url = base_url + "page/" + str(page) + "/"
-
-        print("Страница", page, url)
-
-        response = requests.get(url, headers=HEADERS)
-        if response.status_code != 200:
-            print("Страница не открылась")
-            break
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        cards = soup.select("div.wd-product")
-        if len(cards) == 0:
-            print("Карточек нет")
-            break
-
-        for card in cards:
-            title_el = card.select_one("h3.wd-entities-title a")
-
-            price_el = card.select_one("span.price ins .woocommerce-Price-amount")
-            if price_el is None:
-                price_el = card.select_one("span.price .woocommerce-Price-amount")
-
-            old_price_el = card.select_one("span.price del .woocommerce-Price-amount")
-            if old_price_el is None:
-                old_price = None
+        for page in range(1, 100):
+            if page == 1:
+                url = base_url
             else:
-                old_price = old_price_el.get_text(strip=True)
+                url = base_url + "page/" + str(page) + "/"
 
-            name = title_el.get_text(strip=True)
-            link = title_el.get("href")
-            price = price_el.get_text(strip=True)
-            in_stock = "instock" in card.get("class", [])
+            print("Страница", page, url)
 
-            product = {
-                "name": name,
-                "price": price,
-                "old_price": old_price,
-                "category": category,
-                "in_stock": in_stock,
-                "link": link,
-            }
-            products.append(product)
+            response = requests.get(url, headers=HEADERS)
+            if response.status_code != 200:
+                print("Страница не открылась")
+                break
 
-        time.sleep(1)
+            soup = BeautifulSoup(response.text, "html.parser")
+            cards = soup.select("div.wd-product")
+            if len(cards) == 0:
+                print("Карточек нет")
+                break
 
-df = pd.DataFrame(products)
-print(df.head())
-print(df["category"].value_counts())
+            for card in cards:
+                title_el = card.select_one("h3.wd-entities-title a")
 
-df.to_csv("data/products.csv", index=False, encoding="utf-8-sig")
-print("Сохранено в data/products.csv")
+                price_el = card.select_one("span.price ins .woocommerce-Price-amount")
+                if price_el is None:
+                    price_el = card.select_one("span.price .woocommerce-Price-amount")
+
+                old_price_el = card.select_one("span.price del .woocommerce-Price-amount")
+                if old_price_el is None:
+                    old_price = None
+                else:
+                    old_price = old_price_el.get_text(strip=True)
+
+                name = title_el.get_text(strip=True)
+                link = title_el.get("href")
+                price = price_el.get_text(strip=True)
+                in_stock = "instock" in card.get("class", [])
+
+                product = {
+                    "name": name,
+                    "price": price,
+                    "old_price": old_price,
+                    "category": category,
+                    "in_stock": in_stock,
+                    "link": link,
+                }
+                products.append(product)
+
+            time.sleep(1)
+
+    df = pd.DataFrame(products)
+    print(df["category"].value_counts())
+
+    df.to_csv("data/products.csv", index=False, encoding="utf-8-sig")
+    print("Сохранено в data/products.csv")
+
+if __name__ == '__main__':
+    run_scraper()
